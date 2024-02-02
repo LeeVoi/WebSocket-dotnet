@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {FormControl} from "@angular/forms";
+import {BaseDto, ServerEchoClientDto} from "../BaseDto";
 
 @Component({
   selector: 'app-root',
@@ -17,10 +18,22 @@ export class AppComponent {
 
   constructor() {
     this.ws.onmessage = message => {
-      this.messages.push(message.data);
+      const messageFromServer = JSON.parse(message.data) as BaseDto<any>
+      // @ts-ignore
+      this[messageFromServer.eventType].call(this, messageFromServer);
+
     }
   }
+
+  ServerEchoClient(dto: ServerEchoClientDto) {
+    this.messages.push(dto.echoValue!);
+  }
   sendMessage() {
-    this.ws.send(this.messageContent.value!);
+    var object :{eventType: string, messageContent: string} = {
+      eventType: "ClientWantsToEchoServer",
+      messageContent: this.messageContent.value!
+    }
+    this.ws.send(JSON.stringify(object));
+
   }
 }
